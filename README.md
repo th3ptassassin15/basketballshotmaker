@@ -28,9 +28,15 @@ This is being built step by step. Implemented so far:
     (the library board can't be deleted, so every button always has a home).
   - Long-press any button for **Edit** (change the label and/or retake the
     photo) or **Delete** (removes it everywhere it's used).
+- **First/Then builder** — a quick-access tool reached from a header icon on
+  the Boards tab. Pick any two existing buttons ("First" and "Then") and save
+  them as a pairing; opening one shows a full-screen split view where tapping
+  either side speaks it aloud — a simple visual + audio contract like
+  "First: WORK, Then: RECESS". Deleting a pairing only removes the pairing,
+  not the underlying buttons.
 - **Settings** tab — placeholder for now.
 
-Not yet built: the First/Then board builder.
+All MVP features from the spec are now implemented.
 
 ## Get started
 
@@ -66,14 +72,20 @@ src/
     button/
       _layout.tsx
       [id]/edit.tsx           Edit label / retake photo / delete button
+    first-then/
+      _layout.tsx
+      index.tsx               List of saved First/Then pairings
+      new.tsx                 Pick First + Then buttons and save
+      [id].tsx                Full-screen split viewer, tap each side to speak
   components/
     AACButtonTile.tsx        Photo + label tile with tap animation
     ButtonActionSheet.tsx    Long-press Edit/Delete sheet
+    ButtonPickerModal.tsx    Full-screen button picker (used by First/Then)
     GridSizePicker.tsx       2x2 / 3x3 / 4x4 selector
   constants/
     theme.ts                 Fixed, high-contrast, calm color palette + spacing
   services/
-    storage.ts               AsyncStorage-backed persistence for buttons/boards
+    storage.ts               AsyncStorage-backed persistence for buttons/boards/pairs
     imageStorage.ts           Copies captured photos into permanent app storage
     speech.ts                 expo-speech wrapper
   types/

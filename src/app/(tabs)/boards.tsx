@@ -35,14 +35,24 @@ export default function BoardListScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Choice Boards</Text>
-        <Pressable
-          style={styles.newBoardButton}
-          onPress={() => router.push('/board/new')}
-          accessibilityRole="button"
-          accessibilityLabel="Create new board"
-        >
-          <Ionicons name="add" size={28} color={colors.surface} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            style={styles.firstThenButton}
+            onPress={() => router.push('/first-then')}
+            accessibilityRole="button"
+            accessibilityLabel="First then Then boards"
+          >
+            <Ionicons name="swap-horizontal" size={24} color={colors.primaryDark} />
+          </Pressable>
+          <Pressable
+            style={styles.newBoardButton}
+            onPress={() => router.push('/board/new')}
+            accessibilityRole="button"
+            accessibilityLabel="Create new board"
+          >
+            <Ionicons name="add" size={28} color={colors.surface} />
+          </Pressable>
+        </View>
       </View>
 
       <FlatList
@@ -82,6 +92,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   title: { ...typography.title, color: colors.text },
+  headerActions: { flexDirection: 'row', gap: spacing.sm },
+  firstThenButton: {
+    width: minTouchTarget * 0.6,
+    height: minTouchTarget * 0.6,
+    borderRadius: radii.lg,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   newBoardButton: {
     width: minTouchTarget * 0.6,
     height: minTouchTarget * 0.6,

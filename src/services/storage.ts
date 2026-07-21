@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import type { AACButtonData, Board } from '@/types';
+import type { AACButtonData, Board, FirstThenPair } from '@/types';
 import { generateId } from '@/utils/id';
 
 const BUTTONS_KEY = 'tapvoice:buttons';
 const BOARDS_KEY = 'tapvoice:boards';
+const FIRST_THEN_KEY = 'tapvoice:firstThen';
 
 /** Every button is always added here on creation, so it always has a home even before being organized. */
 export const LIBRARY_BOARD_ID = 'default';
@@ -25,6 +26,10 @@ async function saveBoards(boards: Board[]): Promise<void> {
 
 async function saveButtons(buttons: AACButtonData[]): Promise<void> {
   await AsyncStorage.setItem(BUTTONS_KEY, JSON.stringify(buttons));
+}
+
+async function saveFirstThenPairs(pairs: FirstThenPair[]): Promise<void> {
+  await AsyncStorage.setItem(FIRST_THEN_KEY, JSON.stringify(pairs));
 }
 
 export async function getButtons(): Promise<AACButtonData[]> {
@@ -72,7 +77,7 @@ export async function updateButton(
   await saveButtons(buttons.map((button) => (button.id === buttonId ? { ...button, ...updates } : button)));
 }
 
-/** Deletes a button everywhere: the library, and every board it was added to. */
+/** Deletes a button everywhere: the library, every board it was added to, and any First/Then pair using it. */
 export async function deleteButton(buttonId: string): Promise<void> {
   const buttons = await getButtons();
   await saveButtons(buttons.filter((button) => button.id !== buttonId));
@@ -83,6 +88,11 @@ export async function deleteButton(buttonId: string): Promise<void> {
       ...board,
       buttonIds: board.buttonIds.filter((id) => id !== buttonId),
     }))
+  );
+
+  const pairs = await getFirstThenPairs();
+  await saveFirstThenPairs(
+    pairs.filter((pair) => pair.firstButtonId !== buttonId && pair.thenButtonId !== buttonId)
   );
 }
 
@@ -125,4 +135,25 @@ export async function addButtonsToBoard(boardId: string, buttonIds: string[]): P
         : board
     )
   );
+}
+
+export async function getFirstThenPairs(): Promise<FirstThenPair[]> {
+  return readJSON<FirstThenPair[]>(FIRST_THEN_KEY, []);
+}
+
+export async function createFirstThenPair(firstButtonId: string, thenButtonId: string): Promise<FirstThenPair> {
+  const pairs = await getFirstThenPairs();
+  const pair: FirstThenPair = {
+    id: generateId(),
+    firstButtonId,
+    thenButtonId,
+    createdAt: Date.now(),
+  };
+  await saveFirstThenPairs([...pairs, pair]);
+  return pair;
+}
+
+export async function deleteFirstThenPair(pairId: string): Promise<void> {
+  const pairs = await getFirstThenPairs();
+  await saveFirstThenPairs(pairs.filter((pair) => pair.id !== pairId));
 }
