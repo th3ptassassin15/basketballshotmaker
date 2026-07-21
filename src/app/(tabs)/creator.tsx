@@ -13,6 +13,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 
+import { useSettings } from '@/context/SettingsContext';
 import { colors, minTouchTarget, radii, spacing, typography } from '@/constants/theme';
 import { persistImage } from '@/services/imageStorage';
 import { saveButton } from '@/services/storage';
@@ -23,6 +24,7 @@ import type { AACButtonData } from '@/types';
 type Stage = 'idle' | 'reviewing' | 'saving';
 
 export default function CreatorScreen() {
+  const { settings } = useSettings();
   const [stage, setStage] = useState<Stage>('idle');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [label, setLabel] = useState('');
@@ -37,6 +39,26 @@ export default function CreatorScreen() {
     }
 
     const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setPhotoUri(result.assets[0].uri);
+      setStage('reviewing');
+    }
+  }
+
+  async function handleChooseFromLibrary() {
+    setError(null);
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setError('Photo library access is needed to choose an existing photo. Please enable it in your device settings.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
@@ -75,7 +97,7 @@ export default function CreatorScreen() {
         createdAt: Date.now(),
       };
       await saveButton(button);
-      speak(trimmedLabel);
+      speak(trimmedLabel, settings);
 
       setPhotoUri(null);
       setLabel('');
@@ -99,6 +121,9 @@ export default function CreatorScreen() {
           <Pressable style={styles.primaryButton} onPress={handleTakePhoto} accessibilityRole="button">
             <Text style={styles.primaryButtonText}>Take Photo</Text>
           </Pressable>
+          <Pressable style={styles.secondaryButton} onPress={handleChooseFromLibrary} accessibilityRole="button">
+            <Text style={styles.secondaryButtonText}>Choose from Library</Text>
+          </Pressable>
         </View>
       )}
 
@@ -120,7 +145,7 @@ export default function CreatorScreen() {
 
           <View style={styles.actionRow}>
             <Pressable
-              style={[styles.secondaryButton, stage === 'saving' && styles.disabled]}
+              style={[styles.secondaryButton, styles.actionButton, stage === 'saving' && styles.disabled]}
               onPress={handleRetake}
               disabled={stage === 'saving'}
               accessibilityRole="button"
@@ -179,6 +204,7 @@ const styles = StyleSheet.create({
     minHeight: minTouchTarget * 0.6,
   },
   actionRow: { flexDirection: 'row', gap: spacing.md },
+  actionButton: { flex: 1 },
   primaryButton: {
     backgroundColor: colors.primary,
     borderRadius: radii.md,

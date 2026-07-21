@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ export default function AddButtonsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [available, setAvailable] = useState<AACButtonData[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
     const [board, allButtons] = await Promise.all([getBoard(id), getButtons()]);
@@ -19,6 +20,12 @@ export default function AddButtonsScreen() {
     setAvailable(allButtons.filter((button) => !existingIds.has(button.id)));
     setSelected(new Set());
   }, [id]);
+
+  const filtered = useMemo(() => {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) return available;
+    return available.filter((button) => button.label.toLowerCase().includes(trimmed));
+  }, [available, query]);
 
   useFocusEffect(
     useCallback(() => {
@@ -49,15 +56,30 @@ export default function AddButtonsScreen() {
 
   return (
     <View style={styles.container}>
+      {available.length > 5 && (
+        <TextInput
+          style={styles.search}
+          placeholder="Search buttons"
+          placeholderTextColor={colors.textMuted}
+          value={query}
+          onChangeText={setQuery}
+          accessibilityLabel="Search buttons"
+        />
+      )}
+
       {available.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>
             Every button you've created is already on this board. Make more from the Create tab.
           </Text>
         </View>
+      ) : filtered.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No buttons match "{query}".</Text>
+        </View>
       ) : (
         <FlatList
-          data={available}
+          data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => {
@@ -94,6 +116,19 @@ export default function AddButtonsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  search: {
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: 16,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    minHeight: minTouchTarget * 0.55,
+  },
   list: { padding: spacing.md, gap: spacing.sm },
   row: {
     flexDirection: 'row',

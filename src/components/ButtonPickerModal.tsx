@@ -1,4 +1,5 @@
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 
 import { colors, minTouchTarget, radii, spacing, typography } from '@/constants/theme';
@@ -13,6 +14,18 @@ interface ButtonPickerModalProps {
 }
 
 export function ButtonPickerModal({ visible, title, buttons, onSelect, onClose }: ButtonPickerModalProps) {
+  const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    if (visible) setQuery('');
+  }, [visible]);
+
+  const filtered = useMemo(() => {
+    const trimmed = query.trim().toLowerCase();
+    if (!trimmed) return buttons;
+    return buttons.filter((button) => button.label.toLowerCase().includes(trimmed));
+  }, [buttons, query]);
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
@@ -23,15 +36,28 @@ export function ButtonPickerModal({ visible, title, buttons, onSelect, onClose }
           </Pressable>
         </View>
 
+        {buttons.length > 5 && (
+          <TextInput
+            style={styles.search}
+            placeholder="Search buttons"
+            placeholderTextColor={colors.textMuted}
+            value={query}
+            onChangeText={setQuery}
+            accessibilityLabel="Search buttons"
+          />
+        )}
+
         {buttons.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>
-              No buttons yet. Make some from the Create tab first.
-            </Text>
+            <Text style={styles.emptyText}>No buttons yet. Make some from the Create tab first.</Text>
+          </View>
+        ) : filtered.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No buttons match "{query}".</Text>
           </View>
         ) : (
           <FlatList
-            data={buttons}
+            data={filtered}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
             renderItem={({ item }) => (
@@ -64,6 +90,19 @@ const styles = StyleSheet.create({
   title: { ...typography.title, fontSize: 22, color: colors.text },
   closeButton: { minHeight: minTouchTarget * 0.5, justifyContent: 'center', paddingHorizontal: spacing.sm },
   closeButtonText: { ...typography.label, fontSize: 17, color: colors.primaryDark },
+  search: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    fontSize: 16,
+    color: colors.text,
+    backgroundColor: colors.surface,
+    minHeight: minTouchTarget * 0.55,
+  },
   list: { padding: spacing.md, gap: spacing.sm },
   row: {
     flexDirection: 'row',

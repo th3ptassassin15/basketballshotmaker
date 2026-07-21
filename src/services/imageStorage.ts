@@ -25,3 +25,10 @@ export function deleteImage(uri: string): void {
     file.delete();
   }
 }
+
+/** Writes a base64-encoded image (e.g. from a restored backup) into permanent app storage. */
+export function writeImageFromBase64(base64: string, buttonId: string, extension: string): string {
+  const destination = new File(getImagesDirectory(), `${buttonId}${extension}`);
+  destination.write(base64, { encoding: 'base64' });
+  return destination.uri;
+}

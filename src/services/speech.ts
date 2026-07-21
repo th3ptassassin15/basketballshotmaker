@@ -1,10 +1,16 @@
 import * as Speech from 'expo-speech';
 
-export function speak(text: string): void {
+import { DEFAULT_SETTINGS } from '@/services/settings';
+import type { AppSettings } from '@/types';
+
+type SpeechSettings = Pick<AppSettings, 'speechRate' | 'speechPitch' | 'voiceIdentifier'>;
+
+export function speak(text: string, settings: SpeechSettings = DEFAULT_SETTINGS): void {
   Speech.stop();
   Speech.speak(text, {
-    rate: 0.9,
-    pitch: 1.0,
+    rate: settings.speechRate,
+    pitch: settings.speechPitch,
+    voice: settings.voiceIdentifier ?? undefined,
   });
 }
 

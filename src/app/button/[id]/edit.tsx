@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -41,6 +42,18 @@ export default function EditButtonScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.7 });
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  }
+
+  async function handleChooseFromLibrary() {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setError('Photo library access is needed to choose an existing photo.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.7 });
     if (!result.canceled && result.assets?.[0]?.uri) {
       setPhotoUri(result.assets[0].uri);
     }
@@ -89,9 +102,18 @@ export default function EditButtonScreen() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {photoUri && <Image source={{ uri: photoUri }} style={styles.preview} />}
 
-      <Pressable style={styles.retakeButton} onPress={handleRetake} accessibilityRole="button">
-        <Text style={styles.retakeButtonText}>Retake Photo</Text>
-      </Pressable>
+      <View style={styles.retakeRow}>
+        <Pressable style={[styles.retakeButton, styles.retakeButtonFlex]} onPress={handleRetake} accessibilityRole="button">
+          <Text style={styles.retakeButtonText}>Retake Photo</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.retakeButton, styles.retakeButtonFlex]}
+          onPress={handleChooseFromLibrary}
+          accessibilityRole="button"
+        >
+          <Text style={styles.retakeButtonText}>Choose from Library</Text>
+        </Pressable>
+      </View>
 
       <TextInput
         style={styles.input}
@@ -124,6 +146,7 @@ export default function EditButtonScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg, gap: spacing.md },
   preview: { width: '100%', aspectRatio: 1, borderRadius: radii.lg, backgroundColor: colors.surface },
+  retakeRow: { flexDirection: 'row', gap: spacing.sm },
   retakeButton: {
     alignSelf: 'center',
     minHeight: minTouchTarget * 0.6,
@@ -134,6 +157,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  retakeButtonFlex: { flex: 1 },
   retakeButtonText: { ...typography.label, fontSize: 17, color: colors.text },
   input: {
     borderWidth: 2,

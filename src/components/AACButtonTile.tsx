@@ -1,7 +1,9 @@
 import { useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
+import * as Haptics from 'expo-haptics';
 
+import { useSettings } from '@/context/SettingsContext';
 import { colors, minTouchTarget, radii, spacing, typography } from '@/constants/theme';
 
 interface AACButtonTileProps {
@@ -12,10 +14,14 @@ interface AACButtonTileProps {
 }
 
 export function AACButtonTile({ label, imageUri, onPress, onLongPress }: AACButtonTileProps) {
+  const { settings } = useSettings();
   const scale = useRef(new Animated.Value(1)).current;
   const highlight = useRef(new Animated.Value(0)).current;
 
   function handlePress() {
+    if (settings.hapticsEnabled) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     Animated.sequence([
       Animated.timing(scale, { toValue: 0.94, duration: 90, useNativeDriver: true }),
       Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true }),
@@ -43,11 +49,13 @@ export function AACButtonTile({ label, imageUri, onPress, onLongPress }: AACButt
         accessibilityLabel={label}
       >
         <Image source={{ uri: imageUri }} style={styles.image} contentFit="cover" />
-        <View style={styles.labelBar}>
-          <Text style={styles.labelText} numberOfLines={1}>
-            {label.toUpperCase()}
-          </Text>
-        </View>
+        {settings.showLabels && (
+          <View style={styles.labelBar}>
+            <Text style={styles.labelText} numberOfLines={1}>
+              {label.toUpperCase()}
+            </Text>
+          </View>
+        )}
       </Pressable>
     </Animated.View>
   );

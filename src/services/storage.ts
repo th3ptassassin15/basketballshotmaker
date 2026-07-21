@@ -45,6 +45,7 @@ export async function getBoards(): Promise<Board[]> {
     name: 'All Buttons',
     columns: 3,
     buttonIds: [],
+    linkedBoardIds: [],
     createdAt: Date.now(),
   };
   await saveBoards([libraryBoard]);
@@ -103,6 +104,7 @@ export async function createBoard(name: string, columns: number): Promise<Board>
     name,
     columns,
     buttonIds: [],
+    linkedBoardIds: [],
     createdAt: Date.now(),
   };
   await saveBoards([...boards, board]);
@@ -123,7 +125,36 @@ export async function updateBoardColumns(boardId: string, columns: number): Prom
 export async function deleteBoard(boardId: string): Promise<void> {
   if (boardId === LIBRARY_BOARD_ID) return;
   const boards = await getBoards();
-  await saveBoards(boards.filter((board) => board.id !== boardId));
+  await saveBoards(
+    boards
+      .filter((board) => board.id !== boardId)
+      .map((board) => ({
+        ...board,
+        linkedBoardIds: board.linkedBoardIds.filter((id) => id !== boardId),
+      }))
+  );
+}
+
+export async function linkBoards(fromBoardId: string, toBoardId: string): Promise<void> {
+  const boards = await getBoards();
+  await saveBoards(
+    boards.map((board) =>
+      board.id === fromBoardId
+        ? { ...board, linkedBoardIds: Array.from(new Set([...board.linkedBoardIds, toBoardId])) }
+        : board
+    )
+  );
+}
+
+export async function unlinkBoard(fromBoardId: string, toBoardId: string): Promise<void> {
+  const boards = await getBoards();
+  await saveBoards(
+    boards.map((board) =>
+      board.id === fromBoardId
+        ? { ...board, linkedBoardIds: board.linkedBoardIds.filter((id) => id !== toBoardId) }
+        : board
+    )
+  );
 }
 
 export async function addButtonsToBoard(boardId: string, buttonIds: string[]): Promise<void> {
@@ -156,4 +187,15 @@ export async function createFirstThenPair(firstButtonId: string, thenButtonId: s
 export async function deleteFirstThenPair(pairId: string): Promise<void> {
   const pairs = await getFirstThenPairs();
   await saveFirstThenPairs(pairs.filter((pair) => pair.id !== pairId));
+}
+
+/** Replaces all buttons, boards, and First/Then pairs at once — used when restoring a backup. */
+export async function restoreAll(
+  buttons: AACButtonData[],
+  boards: Board[],
+  firstThenPairs: FirstThenPair[]
+): Promise<void> {
+  await saveButtons(buttons);
+  await saveBoards(boards);
+  await saveFirstThenPairs(firstThenPairs);
 }

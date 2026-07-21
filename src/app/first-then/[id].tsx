@@ -5,6 +5,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useSettings } from '@/context/SettingsContext';
 import { colors, minTouchTarget, radii, spacing, typography } from '@/constants/theme';
 import { deleteFirstThenPair, getButtons, getFirstThenPairs } from '@/services/storage';
 import { speak } from '@/services/speech';
@@ -76,8 +77,14 @@ interface PanelProps {
 }
 
 function Panel({ label, button }: PanelProps) {
+  const { settings } = useSettings();
   return (
-    <Pressable style={styles.panel} onPress={() => speak(button.label)} accessibilityRole="button" accessibilityLabel={`${label}: ${button.label}`}>
+    <Pressable
+      style={styles.panel}
+      onPress={() => speak(button.label, settings)}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${button.label}`}
+    >
       <Text style={styles.panelLabel}>{label}</Text>
       <Image source={{ uri: button.imageUri }} style={styles.panelImage} contentFit="cover" />
       <Text style={styles.panelButtonLabel} numberOfLines={1}>

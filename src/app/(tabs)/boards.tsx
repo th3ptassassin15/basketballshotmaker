@@ -3,6 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useSettings } from '@/context/SettingsContext';
 import { colors, minTouchTarget, radii, spacing, typography } from '@/constants/theme';
 import { getBoards, getButtons } from '@/services/storage';
 import type { Board } from '@/types';
@@ -12,6 +13,7 @@ interface BoardSummary extends Board {
 }
 
 export default function BoardListScreen() {
+  const { settings } = useSettings();
   const [boards, setBoards] = useState<BoardSummary[]>([]);
 
   const load = useCallback(async () => {
@@ -30,6 +32,8 @@ export default function BoardListScreen() {
       load();
     }, [load])
   );
+
+  const homeBoard = boards.find((board) => board.id === settings.homeBoardId);
 
   return (
     <View style={styles.container}>
@@ -59,6 +63,23 @@ export default function BoardListScreen() {
         data={boards}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={
+          homeBoard ? (
+            <Pressable
+              style={styles.homeBanner}
+              onPress={() => router.push({ pathname: '/board/[id]', params: { id: homeBoard.id } })}
+              accessibilityRole="button"
+              accessibilityLabel={`Open home board: ${homeBoard.name}`}
+            >
+              <Ionicons name="star" size={24} color={colors.surface} />
+              <View style={styles.homeBannerText}>
+                <Text style={styles.homeBannerLabel}>Home Board</Text>
+                <Text style={styles.homeBannerTitle}>{homeBoard.name}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={22} color={colors.surface} />
+            </Pressable>
+          ) : null
+        }
         renderItem={({ item }) => (
           <Pressable
             style={styles.card}
@@ -112,6 +133,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   list: { paddingHorizontal: spacing.md, paddingBottom: spacing.xl, gap: spacing.md },
+  homeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    minHeight: minTouchTarget,
+    marginBottom: spacing.md,
+  },
+  homeBannerText: { flex: 1 },
+  homeBannerLabel: { ...typography.small, color: colors.surface, opacity: 0.85 },
+  homeBannerTitle: { ...typography.label, color: colors.surface, fontSize: 19 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
