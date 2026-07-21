@@ -1,27 +1,28 @@
 import { useCallback, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
-import { AACButtonTile } from '@/components/AACButtonTile';
-import { colors, spacing, typography } from '@/constants/theme';
+import { colors, minTouchTarget, radii, spacing, typography } from '@/constants/theme';
 import { getBoards, getButtons } from '@/services/storage';
-import { speak } from '@/services/speech';
-import type { AACButtonData, Board } from '@/types';
+import type { Board } from '@/types';
 
-export default function BoardsScreen() {
-  const [board, setBoard] = useState<Board | null>(null);
-  const [buttons, setButtons] = useState<AACButtonData[]>([]);
+interface BoardSummary extends Board {
+  buttonCount: number;
+}
+
+export default function BoardListScreen() {
+  const [boards, setBoards] = useState<BoardSummary[]>([]);
 
   const load = useCallback(async () => {
-    const [boards, allButtons] = await Promise.all([getBoards(), getButtons()]);
-    const primaryBoard = boards[0] ?? null;
-    setBoard(primaryBoard);
-
-    const buttonById = new Map(allButtons.map((button) => [button.id, button]));
-    const ordered = (primaryBoard?.buttonIds ?? [])
-      .map((id) => buttonById.get(id))
-      .filter((button): button is AACButtonData => Boolean(button));
-    setButtons(ordered);
+    const [allBoards, allButtons] = await Promise.all([getBoards(), getButtons()]);
+    const validButtonIds = new Set(allButtons.map((button) => button.id));
+    setBoards(
+      allBoards.map((board) => ({
+        ...board,
+        buttonCount: board.buttonIds.filter((id) => validButtonIds.has(id)).length,
+      }))
+    );
   }, []);
 
   useFocusEffect(
@@ -32,36 +33,84 @@ export default function BoardsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{board?.name ?? 'My Buttons'}</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Choice Boards</Text>
+        <Pressable
+          style={styles.newBoardButton}
+          onPress={() => router.push('/board/new')}
+          accessibilityRole="button"
+          accessibilityLabel="Create new board"
+        >
+          <Ionicons name="add" size={28} color={colors.surface} />
+        </Pressable>
+      </View>
 
-      {buttons.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>
-            No buttons yet. Open the Create tab to snap a photo and make your first AAC button.
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={buttons}
-          key={board?.columns ?? 3}
-          numColumns={board?.columns ?? 3}
-          keyExtractor={(item) => item.id}
-          columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.grid}
-          renderItem={({ item }) => (
-            <AACButtonTile label={item.label} imageUri={item.imageUri} onPress={() => speak(item.label)} />
-          )}
-        />
-      )}
+      <FlatList
+        data={boards}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) => (
+          <Pressable
+            style={styles.card}
+            onPress={() => router.push({ pathname: '/board/[id]', params: { id: item.id } })}
+            accessibilityRole="button"
+          >
+            <View style={styles.cardIcon}>
+              <Ionicons name="grid" size={28} color={colors.primaryDark} />
+            </View>
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>{item.name}</Text>
+              <Text style={styles.cardSubtitle}>
+                {item.buttonCount} {item.buttonCount === 1 ? 'button' : 'buttons'} · {item.columns} columns
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
+          </Pressable>
+        )}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, paddingTop: spacing.lg },
-  title: { ...typography.title, color: colors.text, paddingHorizontal: spacing.lg, marginBottom: spacing.md },
-  grid: { paddingHorizontal: spacing.md, paddingBottom: spacing.xl },
-  row: { gap: spacing.md, marginBottom: spacing.md },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl },
-  emptyText: { ...typography.body, color: colors.textMuted, textAlign: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  title: { ...typography.title, color: colors.text },
+  newBoardButton: {
+    width: minTouchTarget * 0.6,
+    height: minTouchTarget * 0.6,
+    borderRadius: radii.lg,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  list: { paddingHorizontal: spacing.md, paddingBottom: spacing.xl, gap: spacing.md },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    borderWidth: 2,
+    borderColor: colors.border,
+    padding: spacing.md,
+    minHeight: minTouchTarget,
+  },
+  cardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.md,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardText: { flex: 1 },
+  cardTitle: { ...typography.label, color: colors.text },
+  cardSubtitle: { ...typography.small, color: colors.textMuted, marginTop: 2 },
 });

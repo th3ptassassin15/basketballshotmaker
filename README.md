@@ -15,14 +15,22 @@ This is being built step by step. Implemented so far:
 - **Snap-to-Speech Creator** (`Create` tab) — take a photo, crop it, label it,
   and save it as an AAC button. Images are copied into permanent app storage
   and button metadata is persisted locally with AsyncStorage, so everything
-  works fully offline.
-- **Boards** (`Boards` tab) — a grid of your saved buttons. Tapping a button
-  speaks its label aloud (via `expo-speech`) with a scale + border-highlight
-  animation for visual feedback.
+  works fully offline. Every new button is automatically added to the
+  built-in "All Buttons" library board.
+- **Choice Boards** (`Boards` tab) — a list of boards you've created. Each
+  board has its own adjustable grid size (2x2 / 3x3 / 4x4) and its own subset
+  of buttons:
+  - Create new boards (name + grid size) from the `+` on the Boards tab.
+  - Open a board to see its grid; tap a button to hear it spoken aloud with a
+    scale + border-highlight animation for visual feedback.
+  - "Add Buttons" on a board pulls in any existing button from your library.
+  - "Board Settings" renames a board, changes its grid size, or deletes it
+    (the library board can't be deleted, so every button always has a home).
+  - Long-press any button for **Edit** (change the label and/or retake the
+    photo) or **Delete** (removes it everywhere it's used).
 - **Settings** tab — placeholder for now.
 
-Not yet built: multiple custom boards, adjustable grid sizes, long-press
-edit/delete, and the First/Then board builder.
+Not yet built: the First/Then board builder.
 
 ## Get started
 
@@ -42,25 +50,36 @@ camera permission the first time it's used.
 
 ```
 src/
-  app/                  Expo Router routes (file-based)
-    _layout.tsx         Root layout (Stack, safe area, status bar)
+  app/                       Expo Router routes (file-based)
+    _layout.tsx              Root layout (Stack, safe area, status bar)
     (tabs)/
-      _layout.tsx        Bottom tab navigator: Boards / Create / Settings
-      boards.tsx         Choice board grid + tap-to-speak
-      creator.tsx        Camera -> label -> save AAC button flow
+      _layout.tsx             Bottom tab navigator: Boards / Create / Settings
+      boards.tsx              List of Choice Boards
+      creator.tsx             Camera -> label -> save AAC button flow
       settings.tsx
+    board/
+      _layout.tsx             Modal-friendly Stack for board routes
+      new.tsx                 Create board (name + grid size)
+      [id]/index.tsx          Board grid + tap-to-speak + long-press menu
+      [id]/settings.tsx        Rename / grid size / delete board
+      [id]/add-buttons.tsx     Add existing library buttons to this board
+    button/
+      _layout.tsx
+      [id]/edit.tsx           Edit label / retake photo / delete button
   components/
-    AACButtonTile.tsx    Photo + label tile with tap animation
+    AACButtonTile.tsx        Photo + label tile with tap animation
+    ButtonActionSheet.tsx    Long-press Edit/Delete sheet
+    GridSizePicker.tsx       2x2 / 3x3 / 4x4 selector
   constants/
-    theme.ts             Fixed, high-contrast, calm color palette + spacing
+    theme.ts                 Fixed, high-contrast, calm color palette + spacing
   services/
-    storage.ts           AsyncStorage-backed persistence for buttons/boards
-    imageStorage.ts       Copies captured photos into permanent app storage
-    speech.ts             expo-speech wrapper
+    storage.ts               AsyncStorage-backed persistence for buttons/boards
+    imageStorage.ts           Copies captured photos into permanent app storage
+    speech.ts                 expo-speech wrapper
   types/
-    index.ts              AACButtonData, Board, FirstThenPair
+    index.ts                  AACButtonData, Board, FirstThenPair
   utils/
-    id.ts                 Local id generation
+    id.ts                     Local id generation
 ```
 
 ## Learn more
