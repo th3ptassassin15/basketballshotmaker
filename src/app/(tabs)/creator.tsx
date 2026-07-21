@@ -27,6 +27,7 @@ export default function CreatorScreen() {
   const { settings } = useSettings();
   const [stage, setStage] = useState<Stage>('idle');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const [label, setLabel] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -42,10 +43,12 @@ export default function CreatorScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
+      base64: Platform.OS === 'web',
     });
 
     if (!result.canceled && result.assets?.[0]?.uri) {
       setPhotoUri(result.assets[0].uri);
+      setPhotoBase64(result.assets[0].base64 ?? null);
       setStage('reviewing');
     }
   }
@@ -62,16 +65,19 @@ export default function CreatorScreen() {
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
+      base64: Platform.OS === 'web',
     });
 
     if (!result.canceled && result.assets?.[0]?.uri) {
       setPhotoUri(result.assets[0].uri);
+      setPhotoBase64(result.assets[0].base64 ?? null);
       setStage('reviewing');
     }
   }
 
   function handleRetake() {
     setPhotoUri(null);
+    setPhotoBase64(null);
     setLabel('');
     setError(null);
     setStage('idle');
@@ -89,7 +95,7 @@ export default function CreatorScreen() {
 
     try {
       const id = generateId();
-      const permanentUri = persistImage(photoUri, id);
+      const permanentUri = persistImage(photoUri, id, photoBase64);
       const button: AACButtonData = {
         id,
         label: trimmedLabel,
@@ -100,6 +106,7 @@ export default function CreatorScreen() {
       speak(trimmedLabel, settings);
 
       setPhotoUri(null);
+      setPhotoBase64(null);
       setLabel('');
       setStage('idle');
       router.push('/boards');

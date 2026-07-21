@@ -23,6 +23,7 @@ export default function EditButtonScreen() {
   const [button, setButton] = useState<AACButtonData | null>(null);
   const [label, setLabel] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,9 +42,15 @@ export default function EditButtonScreen() {
       setError('Camera access is needed to retake this photo.');
       return;
     }
-    const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.7 });
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: Platform.OS === 'web',
+    });
     if (!result.canceled && result.assets?.[0]?.uri) {
       setPhotoUri(result.assets[0].uri);
+      setPhotoBase64(result.assets[0].base64 ?? null);
     }
   }
 
@@ -53,9 +60,15 @@ export default function EditButtonScreen() {
       setError('Photo library access is needed to choose an existing photo.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, aspect: [1, 1], quality: 0.7 });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: Platform.OS === 'web',
+    });
     if (!result.canceled && result.assets?.[0]?.uri) {
       setPhotoUri(result.assets[0].uri);
+      setPhotoBase64(result.assets[0].base64 ?? null);
     }
   }
 
@@ -71,7 +84,7 @@ export default function EditButtonScreen() {
     try {
       const updates: Partial<Pick<AACButtonData, 'label' | 'imageUri'>> = { label: trimmed };
       if (photoUri !== button.imageUri) {
-        updates.imageUri = persistImage(photoUri, button.id);
+        updates.imageUri = persistImage(photoUri, button.id, photoBase64);
       }
       await updateButton(button.id, updates);
       router.back();
