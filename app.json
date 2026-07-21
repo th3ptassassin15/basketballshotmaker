@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "TapVoice Creator",
+    "slug": "tapvoice-creator",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/images/icon.png",
+    "scheme": "tapvoicecreator",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "icon": "./assets/expo.icon",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "TapVoice Creator uses the camera so you can photograph objects and turn them into voice-output AAC buttons.",
+        "NSPhotoLibraryUsageDescription": "TapVoice Creator can save button photos to your library and let you choose existing photos for buttons.",
+        "NSPhotoLibraryAddUsageDescription": "TapVoice Creator saves button photos so they can be reused across choice boards."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE", "WRITE_EXTERNAL_STORAGE"]
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#3E7CB1",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "TapVoice Creator can use existing photos for AAC buttons.",
+          "cameraPermission": "TapVoice Creator uses the camera to photograph objects for AAC buttons."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
